@@ -16,10 +16,28 @@ setup = {
         setup.createSetting();
         setup.createPlayer();
         setup.detectKey();
+        
+        // Set focus when user clicks the start button
+        document.querySelector('.startgame').addEventListener('click', setFocus, true);
+        function setFocus(e) {
+            e.preventDefault();
+            setup.gameContainer.focus();
+        }
+        
     },
 
     detectKey: function() {
-        container.onkeyup = function(evt){
+        
+        // Prevent scroll on keying Up or Down
+        setup.gameContainer.addEventListener('keydown', function(evt) {
+            if(evt.keyCode === 40 || evt.keyCode === 38) {
+                evt.preventDefault();
+            }
+        }, true)
+        
+        // In-game key bindings
+        setup.gameContainer.onkeyup = function(evt){
+            // Move avatar if menu isn't open
             if(setup.menuOpen === false) {
                 setup.playerObject.move(setup.playerAvatar, evt);
             }
@@ -84,7 +102,7 @@ entities = {
 actions = {
 
     move: function(avatar, evt) {
-
+        
         setup.countMoves = setup.countMoves + 1;
 
         // Control boundaries
