@@ -1,3 +1,20 @@
+$(document).ready(function() {
+    var key;
+    var direction = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+    }
+    console.log('Woot');
+    $('.wrapper').on('keyup', function (evt) {
+        key = evt.which ;
+        if (direction[key] !== undefined) {
+            console.log(direction[key]);
+        }
+    });
+});
+
 setup = {
 
     gameContainer: document.getElementById('container'), 
@@ -17,13 +34,15 @@ setup = {
         setup.createPlayer();
         setup.detectKey();
         
+        // Game has now started
+        setup.gameStart = false;
+        
         // Set focus when user clicks the start button
         document.querySelector('.startgame').addEventListener('click', setFocus, true);
         function setFocus(e) {
             e.preventDefault();
             setup.gameContainer.focus();
-        }
-        
+        }  
     },
 
     detectKey: function() {
@@ -47,9 +66,17 @@ setup = {
     createPlayer: function() {
         // Place the avatar
         var avatar = document.createElement('div');
-        avatar.className = "player";
-        avatar.setAttribute('data-pos-x', '1');
-        avatar.setAttribute('data-pos-y', '1');
+        avatar.classList.add('player');
+        avatar.classList.add('move-avatar');
+        
+        if (setup.gameStart == true) {
+            avatar.setAttribute('data-pos-x', '1');
+            avatar.setAttribute('data-pos-y', '1');
+            avatar.setAttribute('data-face', 'start');
+        } else {
+            // Need data passed from last setting
+            
+        }
         setup.gameContainer.appendChild(avatar);
         setup.playerAvatar = avatar;
         
@@ -85,7 +112,9 @@ setup = {
             setup.boundaries[39] = [1, 'x'];
             setup.boundaries[40] = [1, 'y'];
             setup.boundaries[37] = [-1, 'x'];
-            
+        } else { 
+            // Not game start
+        
         }
     }
 
@@ -113,8 +142,17 @@ actions = {
         directionBoundary['x'] = setup.width;
         directionBoundary['y'] = setup.height;
         
+        // Rotate helpers
+        var face = {
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down',
+            99: 'start'
+        }
+        
         // Check whether movement is off-screen
-        var offScene = function() {
+        function offScene() {
             if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance <= 0) {
                 return true;
             }
@@ -130,12 +168,73 @@ actions = {
         } else {
             // Change the data attribute
             avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
+            
+            if (avatar.getAttribute('data-face') == 'start' && evt.keyCode == 39) { // Facing start, rotating anti-clockwise
+                console.log('Turn right');
+                avatar.classList.remove('move-avatar');
+                avatar.classList.remove('face-start');
+                avatar.classList.add('face-down');
+                // Prevent new direction from being removed
+                removePreviousDirection('40');
+                avatar.classList.add('move-avatar');
+            } else if (avatar.getAttribute('data-face') == 'down' && evt.keyCode == 37) { // Facing down, rotating clockwise
+                console.log('Turn left');
+                avatar.classList.remove('move-avatar');
+                avatar.classList.remove('face-down');
+                avatar.classList.add('face-start');
+                avatar.classList.add('move-avatar');                
+                avatar.classList.add('face-left');
+            } else if (avatar.getAttribute('data-face') == 'start' && evt.keyCode == 40) { // Facing start, moving down
+                console.log('Down from start')
+                avatar.classList.remove('move-avatar');
+                avatar.classList.remove('face-start');
+                avatar.classList.add('face-down');
+                // Prevent new direction from being removed 
+                removePreviousDirection('40');
+                avatar.classList.add('move-avatar');
+            }
+            
+            avatar.classList.add('face-' + face[evt.keyCode]);
+            avatar.setAttribute('data-face', face[evt.keyCode]);            
+            
+            function removePreviousDirection(exclusion) {
+                console.log(exclusion);
+                for(f = 37; f < 42; f++) {
+                    // Allow 'start' rotate helper to be unrelated to keyCode
+                    f = f == 41 ? 99 : f;
+                    // Remove pre-existing face classes
+                    if(avatar.classList.contains('face-' + face[f]) && (f !== evt.keyCode | f !== exclusion)) {
+                        avatar.classList.remove('face-' + face[f]);
+                        console.log(f + ': ' + face[f]);
+                    }
+                }
+            }
+            
+            avatar.addEventListener('transitionend', postRotate, true);           
+            
+            // Run this once rotation has finished
+            function postRotate() {
+                // Update the style
+                if(direction === 'y') {
+                    // Add walking class
+                    avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                    // Remove walk
+                } else {
+                    avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                }
 
-            // Update the style
-            if(direction === 'y') {
-                avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
-            } else {
-                avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';      
+                avatar.addEventListener('transitionend', finishMovement, true);
+                console.log('Fin1');
+            }
+            
+            function finishMovement() { 
+                console.log('Fin2');
+                // Reset rotation if we've come full circle
+                if(avatar.getAttribute('data-face') === 'down') {
+                    avatar.classList.remove('face-down');
+                    avatar.classList.add('face-start');
+                    avatar.setAttribute('data-face', 'start');
+                }
             }
         }
     }
