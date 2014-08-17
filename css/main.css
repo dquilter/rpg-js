@@ -215,7 +215,6 @@ div.tile {
     background-color: transparent;
     box-shadow: -12px 0px 0 4px red, 12px 0px 0 4px red, -12px 2px 0 3px pink, 12px 2px 0 3px pink;
     border-radius: 100%;
-    -webkit-animation: walk 1s ease-in infinite;
 }
 .player:after {
     display: block;
@@ -227,10 +226,15 @@ div.tile {
     height: 22px;
     background-color: blue;
     border-radius: 100%;
-    -webkit-animation: headbob 1s ease-in infinite;
 }
 .move-avatar {
     transition: top 2s, left 2s, transform 1s;
+}
+.action-walk:after {
+    -webkit-animation: headbob 1s ease-in infinite;
+}
+.action-walk:before {
+    -webkit-animation: walk 1s ease-in infinite;
 }
 @-webkit-keyframes walk {
   0% { box-shadow: -12px 0px 0 4px red, 12px 0px 0 4px red, -12px 0px 0 4px pink, 12px 0px 0 4px pink; }
@@ -247,13 +251,13 @@ div.tile {
   100% { left: 4px; }
 }
 .face-start {
-    transform: rotate(0deg);
+    transform: rotate(360deg);
 }
 .face-up {
     transform: rotate(180deg);
 }
 .face-down {
-    transform: rotate(360deg);
+    transform: rotate(0deg);
 }
 .face-left {
     transform: rotate(90deg);    

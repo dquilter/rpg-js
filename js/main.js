@@ -72,7 +72,8 @@ setup = {
         if (setup.gameStart == true) {
             avatar.setAttribute('data-pos-x', '1');
             avatar.setAttribute('data-pos-y', '1');
-            avatar.setAttribute('data-face', 'start');
+            avatar.setAttribute('data-face', 'down');
+            avatar.classList.add('face-down');
         } else {
             // Need data passed from last setting
             
@@ -150,6 +151,7 @@ actions = {
             40: 'down',
             99: 'start'
         }
+        var rotated;
         
         // Check whether movement is off-screen
         function offScene() {
@@ -166,55 +168,34 @@ actions = {
         if(offScene() === true) {
             alert('You can\'t go that way');
         } else {
-            // Change the data attribute
-            avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
             
-            if (avatar.getAttribute('data-face') == 'start' && evt.keyCode == 39) { // Facing start, rotating anti-clockwise
-                console.log('Turn right');
-                avatar.classList.remove('move-avatar');
-                avatar.classList.remove('face-start');
-                avatar.classList.add('face-down');
-                // Prevent new direction from being removed
-                removePreviousDirection('40');
-                avatar.classList.add('move-avatar');
-            } else if (avatar.getAttribute('data-face') == 'down' && evt.keyCode == 37) { // Facing down, rotating clockwise
-                console.log('Turn left');
-                avatar.classList.remove('move-avatar');
-                avatar.classList.remove('face-down');
-                avatar.classList.add('face-start');
-                avatar.classList.add('move-avatar');                
-                avatar.classList.add('face-left');
-            } else if (avatar.getAttribute('data-face') == 'start' && evt.keyCode == 40) { // Facing start, moving down
-                console.log('Down from start')
-                avatar.classList.remove('move-avatar');
-                avatar.classList.remove('face-start');
-                avatar.classList.add('face-down');
-                // Prevent new direction from being removed 
-                removePreviousDirection('40');
-                avatar.classList.add('move-avatar');
+            // Rotate
+            if (face[evt.keyCode] !== avatar.getAttribute('data-face')) {
+                rotate(avatar.getAttribute('data-face'), face[evt.keyCode])
+            } else {
+                postRotate();
             }
             
-            avatar.classList.add('face-' + face[evt.keyCode]);
-            avatar.setAttribute('data-face', face[evt.keyCode]);            
+            function rotate(currentDir, newDir) {
+                avatar.classList.add('face-' + newDir);
+                avatar.classList.remove('face-' + currentDir);
+                avatar.setAttribute('data-face', newDir);                
+                rotated = true;
+                avatar.addEventListener('transitionend', postRotate, true);
+            }
             
-            function removePreviousDirection(exclusion) {
-                console.log(exclusion);
-                for(f = 37; f < 42; f++) {
-                    // Allow 'start' rotate helper to be unrelated to keyCode
-                    f = f == 41 ? 99 : f;
-                    // Remove pre-existing face classes
-                    if(avatar.classList.contains('face-' + face[f]) && (f !== evt.keyCode | f !== exclusion)) {
-                        avatar.classList.remove('face-' + face[f]);
-                        console.log(f + ': ' + face[f]);
-                    }
+            function postRotate(removeEvtList) {
+                if(rotated === true) {
+                    avatar.removeEventListener('transitionend', postRotate, true);
+                    rotated = undefined;
                 }
-            }
-            
-            avatar.addEventListener('transitionend', postRotate, true);           
-            
-            // Run this once rotation has finished
-            function postRotate() {
-                // Update the style
+                
+                // Add animation
+                avatar.classList.add('action-walk');
+
+                // Change the data attribute
+                avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
+                // Move the avatar
                 if(direction === 'y') {
                     // Add walking class
                     avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
@@ -223,18 +204,12 @@ actions = {
                     avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
                 }
 
-                avatar.addEventListener('transitionend', finishMovement, true);
-                console.log('Fin1');
+                avatar.setAttribute('data-face', face[evt.keyCode]);            
+                avatar.addEventListener('transitionend', postMove, true);           
             }
             
-            function finishMovement() { 
-                console.log('Fin2');
-                // Reset rotation if we've come full circle
-                if(avatar.getAttribute('data-face') === 'down') {
-                    avatar.classList.remove('face-down');
-                    avatar.classList.add('face-start');
-                    avatar.setAttribute('data-face', 'start');
-                }
+            function postMove() {
+                avatar.classList.remove('action-walk');
             }
         }
     }
