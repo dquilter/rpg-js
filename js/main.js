@@ -73,6 +73,7 @@ setup = {
             avatar.setAttribute('data-pos-x', '1');
             avatar.setAttribute('data-pos-y', '1');
             avatar.setAttribute('data-face', 'down');
+            avatar.setAttribute('data-rotate', '0');
             avatar.classList.add('face-down');
         } else {
             // Need data passed from last setting
@@ -87,7 +88,7 @@ setup = {
     
     createSetting: function() {
         if(setup.gameStart == true) {
-            console.log(settings.gameStart);
+            console.log(setup.gameStart);
 
             setup.width = parseInt(settings.start.width, 10);
             setup.height = parseInt(settings.start.height, 10);
@@ -124,6 +125,7 @@ setup = {
 entities = {
 
     moveableObject: function() {
+        this.stopMovement = false;
         this.move = actions.move;
     }
 
@@ -133,87 +135,120 @@ actions = {
 
     move: function(avatar, evt) {
         
-        setup.countMoves = setup.countMoves + 1;
-
-        // Control boundaries
-        var distance = setup.boundaries[evt.keyCode][0];
-        var direction = setup.boundaries[evt.keyCode][1];
-        
-        var directionBoundary = [];
-        directionBoundary['x'] = setup.width;
-        directionBoundary['y'] = setup.height;
-        
-        // Rotate helpers
-        var face = {
-            37: 'left',
-            38: 'up',
-            39: 'right',
-            40: 'down',
-            99: 'start'
-        }
-        var rotated;
-        
-        // Check whether movement is off-screen
-        function offScene() {
-            if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance <= 0) {
-                return true;
-            }
-            if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance >= directionBoundary[direction] + 1) {
-                return true;
-            }
+        // Prevent movement if avatar is already moving
+        if(avatar.stopMovement == true) {
             return false;
-        };
-
-        // Don't allow charcter offscreen
-        if(offScene() === true) {
-            alert('You can\'t go that way');
         } else {
+        
+            setup.countMoves = setup.countMoves + 1;
+
+            // Control boundaries
+            var distance = setup.boundaries[evt.keyCode][0];
+            var direction = setup.boundaries[evt.keyCode][1];
+
+            var directionBoundary = [];
+            directionBoundary['x'] = setup.width;
+            directionBoundary['y'] = setup.height;
+
+            // Rotate helpers
+            var face = {
+                37: 'left',
+                38: 'up',
+                39: 'right',
+                40: 'down',
+                99: 'start'
+            }
+            var faceDiff = {
+                left: {
+                    up: 90,
+                    right: 180,
+                    down: -90
+                },
+                up: {
+                    left: -90,
+                    right: 90,
+                    down: 180
+                },
+                right: {
+                    left: 180,
+                    up: -90,
+                    down: 90
+                },
+                down: {
+                    left: 90,
+                    up: 180,
+                    right: -90
+                }
+            }
+            var rotated;
+            var newRotate;
             
-            // Rotate
-            if (face[evt.keyCode] !== avatar.getAttribute('data-face')) {
-                rotate(avatar.getAttribute('data-face'), face[evt.keyCode])
+            // Check whether movement is off-screen
+            function offScene() {
+                if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance <= 0) {
+                    return true;
+                }
+                if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance >= directionBoundary[direction] + 1) {
+                    return true;
+                }
+                return false;
+            };
+
+            // Don't allow charcter offscreen
+            if(offScene() === true) {
+                alert('You can\'t go that way');
             } else {
-                postRotate();
-            }
-            
-            function rotate(currentDir, newDir) {
-                avatar.classList.add('face-' + newDir);
-                avatar.classList.remove('face-' + currentDir);
-                avatar.setAttribute('data-face', newDir);                
-                rotated = true;
-                avatar.addEventListener('transitionend', postRotate, true);
-            }
-            
-            function postRotate(removeEvtList) {
-                if(rotated === true) {
-                    avatar.removeEventListener('transitionend', postRotate, true);
-                    rotated = undefined;
-                }
-                
-                // Add animation
-                avatar.classList.add('action-walk');
 
-                // Change the data attribute
-                avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
-                // Move the avatar
-                if(direction === 'y') {
-                    // Add walking class
-                    avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
-                    // Remove walk
+                // Prevent movement while avatar is moving
+                avatar.stopMovement = true;
+
+                // Rotate
+                if (face[evt.keyCode] !== avatar.getAttribute('data-face')) {
+                    rotate(avatar.getAttribute('data-face'), face[evt.keyCode])
                 } else {
-                    avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                    postRotate();
                 }
 
-                avatar.setAttribute('data-face', face[evt.keyCode]);            
-                avatar.addEventListener('transitionend', postMove, true);           
-            }
-            
-            function postMove() {
-                avatar.classList.remove('action-walk');
+                function rotate(currentDir, newDir) {
+                    newRotate = parseInt(avatar.getAttribute('data-rotate'), 10) + faceDiff[currentDir][newDir];
+                    avatar.style.transform = 'rotate(' + newRotate + 'deg)';
+                    avatar.setAttribute('data-rotate', newRotate);
+                    avatar.setAttribute('data-face', newDir);                
+                    rotated = true;
+                    avatar.addEventListener('transitionend', postRotate, true);
+                }
+
+                function postRotate(removeEvtList) {
+                    if(rotated === true) {
+                        avatar.removeEventListener('transitionend', postRotate, true);
+                        rotated = undefined;
+                    }
+
+                    // Add animation
+                    avatar.classList.add('action-walk');
+
+                    // Change the data attribute
+                    avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
+                    // Move the avatar
+                    if(direction === 'y') {
+                        // Add walking class
+                        avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                        // Remove walk
+                    } else {
+                        avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                    }
+
+                    avatar.setAttribute('data-face', face[evt.keyCode]);            
+                    avatar.addEventListener('transitionend', postMove, true);           
+                }
+
+                function postMove() {
+                    avatar.classList.remove('action-walk');
+                    avatar.stopMovement = false;
+                }
             }
         }
     }
-    
 };
 
 setup.init();
