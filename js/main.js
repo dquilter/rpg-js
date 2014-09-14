@@ -24,6 +24,7 @@ setup = {
     menuOpen: false,
     gameStart: true,
     
+    tileSize: undefined,
     width: undefined,
     height: undefined,
     boundaries: [],
@@ -92,10 +93,11 @@ setup = {
 
             setup.width = parseInt(settings.start.width, 10);
             setup.height = parseInt(settings.start.height, 10);
+            setup.tileSize = parseInt(settings.start.tileSize, 10);
             
             // Setup container
-            setup.gameContainer.style.width = setup.width * 40 +'px'; 
-            setup.gameContainer.style.height = setup.height * 40 +'px';
+            setup.gameContainer.style.width = setup.width * setup.tileSize +'px'; 
+            setup.gameContainer.style.height = setup.height * setup.tileSize +'px';
             
             // Layout tiles
             var noTiles = setup.height * setup.height;
@@ -105,6 +107,8 @@ setup = {
                 thisTile.setAttribute('data-tile-type', 'grass');
                 thisTile.setAttribute('data-pos-x', tiles);
                 thisTile.setAttribute('data-pos-y', Math.ceil(tiles / setup.width));
+                thisTile.style.width = setup.tileSize + 'px';
+                thisTile.style.height = setup.tileSize + 'px';
                 setup.gameContainer.appendChild(thisTile);
             }
             
@@ -232,10 +236,10 @@ actions = {
                     // Move the avatar
                     if(direction === 'y') {
                         // Add walking class
-                        avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                        avatar.style.top = (avatar.getAttribute('data-pos-' + direction) - 1) * setup.tileSize + 'px';
                         // Remove walk
                     } else {
-                        avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * 40 + 'px';
+                        avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * setup.tileSize + 'px';
                     }
 
                     avatar.setAttribute('data-face', face[evt.keyCode]);            

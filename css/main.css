@@ -183,8 +183,6 @@ div#container {
 
 div.tile { 
     float: left;
-    width: 40px; 
-    height: 40px;
     padding: 0;
     border-width: 0;
     background-color: green;
