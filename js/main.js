@@ -28,6 +28,7 @@ setup = {
     width: undefined,
     height: undefined,
     boundaries: [],
+    directionBoundary: [],
     
     init: function() {
         // Run setup functions
@@ -113,11 +114,16 @@ setup = {
             }
             
             // Set boundries 
-            // Directional set by keycode for arrow keys
+            // Movement helpers
             setup.boundaries[38] = [-1, 'y'];
             setup.boundaries[39] = [1, 'x'];
             setup.boundaries[40] = [1, 'y'];
             setup.boundaries[37] = [-1, 'x'];
+            // Actual boundaries
+            setup.directionBoundary['x'] = setup.width;
+            setup.directionBoundary['y'] = setup.height;
+
+            
         } else { 
             // Not game start
         
@@ -142,6 +148,7 @@ actions = {
         // Prevent movement if avatar is already moving
         if(avatar.stopMovement == true) {
             return false;
+            console.log('No!');
         } else {
         
             setup.countMoves = setup.countMoves + 1;
@@ -149,10 +156,6 @@ actions = {
             // Control boundaries
             var distance = setup.boundaries[evt.keyCode][0];
             var direction = setup.boundaries[evt.keyCode][1];
-
-            var directionBoundary = [];
-            directionBoundary['x'] = setup.width;
-            directionBoundary['y'] = setup.height;
 
             // Rotate helpers
             var face = {
@@ -192,7 +195,7 @@ actions = {
                 if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance <= 0) {
                     return true;
                 }
-                if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance >= directionBoundary[direction] + 1) {
+                if(parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance >= setup.directionBoundary[direction] + 1) {
                     return true;
                 }
                 return false;
@@ -206,7 +209,7 @@ actions = {
                 // Prevent movement while avatar is moving
                 avatar.stopMovement = true;
 
-                // Rotate
+                // Do we need to rotate?
                 if (face[evt.keyCode] !== avatar.getAttribute('data-face')) {
                     rotate(avatar.getAttribute('data-face'), face[evt.keyCode])
                 } else {
@@ -227,10 +230,8 @@ actions = {
                         avatar.removeEventListener('transitionend', postRotate, true);
                         rotated = undefined;
                     }
-
                     // Add animation
                     avatar.classList.add('action-walk');
-
                     // Change the data attribute
                     avatar.setAttribute('data-pos-' + direction, parseInt(avatar.getAttribute('data-pos-' + direction), 10) + distance, 10);
                     // Move the avatar
@@ -241,12 +242,12 @@ actions = {
                     } else {
                         avatar.style.left = (avatar.getAttribute('data-pos-' + direction) - 1) * setup.tileSize + 'px';
                     }
-
                     avatar.setAttribute('data-face', face[evt.keyCode]);            
                     avatar.addEventListener('transitionend', postMove, true);           
                 }
 
                 function postMove() {
+                    avatar.removeEventListener('transitionend', postMove, true);
                     avatar.classList.remove('action-walk');
                     avatar.stopMovement = false;
                 }
