@@ -225,6 +225,14 @@ div.tile {
     background-color: blue;
     border-radius: 100%;
 }
+.drone {
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    margin: 5px;
+    background-color: grey;
+    border-radius: 50%;
+}
 .move-avatar {
     transition: top 2s, left 2s, transform 1s;
 }
